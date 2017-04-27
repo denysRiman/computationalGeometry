@@ -15,11 +15,12 @@ public class Painter {
 
     static ArrayList<Point> points = new ArrayList<Point>();
 
+
     public static void main(String[] args) {
         readJSON();
-        painter();
+        painter(minDisk(points));
     }
-    public static void painter(){
+    public static void painter(final Circle circle){
         JFrame frame = new JFrame("Лабораторна: AO2. Нагорного Дениса");
         frame.setBounds(0, 0, 1600, 1000);
         frame.setVisible(true);
@@ -41,8 +42,9 @@ public class Painter {
 
 //                int R = (int) resR;
 //
-//                g.setColor(new Color(255, 59, 43));
-//                g.drawOval(800+resX-R, 500-resY-R, R*2-1, R*2-1);
+                g.setColor(new Color(255, 59, 43));
+
+                g.drawOval((int)(800+circle.getO().getX()-circle.getR()), (int) (500-circle.getO().getY()-circle.getR()), (int)(circle.getR()*2), (int)(circle.getR()*2-1));
 
             }
         };
@@ -61,7 +63,6 @@ public class Painter {
             JSONArray ys = (JSONArray) object.get("y");
             for (Object i: ys){
                 points.get(iterator).setY(Integer.parseInt(i.toString()));
-                System.out.println(ys.indexOf(i));
                 iterator++;
             }
         } catch (IOException e) {
@@ -72,28 +73,66 @@ public class Painter {
     }
 
 
-    public static void minDisk (ArrayList<Point> points){
+    public static Circle minDisk(ArrayList<Point> points){
+        ArrayList<Circle> circles = new ArrayList<Circle>();
         Point point1 = points.get(0);
         Point point2 = points.get(1);
-        Circle circle = new Circle(point1, point2 );
+          circles.add(new Circle(new Point(0,0), new Point(0,0)));
+          circles.add(new Circle(point1, point2));
         for (int i = 2; i < points.size(); i++){
-            if (belonging(points.get(i), circle)){
-
+//            Circle circle = new Circle(points.get(i-1), points.get(i));
+            if (belonging(points.get(i), circles.get(i-1))){
+                circles.add(circles.get(i-1));
+            } else{
+                ArrayList<Point> pointArrayList = new ArrayList<Point>();
+                for (int k = 0; k<i-1; k++){
+                   pointArrayList.add(points.get(k));
+                }
+                circles.add(minDiskWithPoint(pointArrayList, points.get(i)));
             }
         }
-
+        return circles.get(circles.size()-1);
     }
 
     public static boolean belonging(Point point, Circle circle){
-
-        return true;
+        if(Math.sqrt(Math.pow(circle.getO().getX()-point.getX(), 2)+Math.pow(circle.getO().getY()-point.getY(),2)) <= circle.getR()){
+            return true;
+        }
+       return false;
     }
-//    public static void minDiskWithPoint (){
-//
-//    }
-//    public static void minDiskWith2Points (){
-//
-//    }
+
+    public static Circle  minDiskWithPoint (ArrayList<Point> points, Point q){
+        ArrayList<Circle> circles = new ArrayList<Circle>();
+        circles.add(new Circle(points.get(0), q));
+        for (int i = 1; i < points.size(); i++){
+            if (belonging(points.get(i), circles.get(i-1))){
+                circles.add(circles.get(i-1));
+            } else {
+                ArrayList<Point> pointArrayList = new ArrayList<Point>();
+                for (int k = 0; k<i-1; k++){
+                    pointArrayList.add(points.get(k));
+                }
+                circles.add(minDiskWith2Points(pointArrayList, points.get(i), q));
+            }
+        }
+        return circles.get(circles.size()-1);
+    }
+    public static Circle  minDiskWith2Points(ArrayList<Point> points, Point q1, Point q2){
+        ArrayList<Circle> circles = new ArrayList<Circle>();
+        circles.add(new Circle(q1,q2));
+        for (int i=1; i< points.size(); i++){
+            if (belonging(points.get(i-1),circles.get(i-1))){
+                circles.add(circles.get(i-1));
+            } else {
+                circles.add(circumCircle(points.get(i-1), q1, q2));
+            }
+        }
+        return circles.get(circles.size()-1);
+    }
+
+    public static Circle circumCircle(Point point, Point q1, Point q2){
+        return new Circle(point,q1,q2);
+    }
 
 }
 
